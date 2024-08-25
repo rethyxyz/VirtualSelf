@@ -25,7 +25,7 @@ PROGRAM_DESCRIPTION = "Anti-Theft / Remote Access Utility"
 DEFAULT_SIGNAL1 = "remote1.html"
 DEFAULT_SIGNAL2 = "remote2.html"
 DEFAULT_SIGNAL3 = "remote3.html"
-DEFAULT_CNC_DOMAIN = "https://rethy.xyz"
+DEFAULT_CNC_DOMAIN = "https://cnc.domain.com"
 POST_USERNAME = ''
 POST_PASSWORD = ''
 
