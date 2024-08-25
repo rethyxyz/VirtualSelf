@@ -1,0 +1,16 @@
+os
+winreg
+time
+urllib
+pyautogui
+requests
+psutil
+cv2
+sounddevice
+scipy
+datetime
+threading
+sys
+pystray
+PIL
+plyer
