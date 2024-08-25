@@ -1,0 +1,12 @@
+build
+dist
+~Downloads.
+*.spec
+VirtualSelf_Build.ps1
+*_build
+*.ps1
+*.cs
+*.sln
+*.docx
+*.html
+*CSharp*
