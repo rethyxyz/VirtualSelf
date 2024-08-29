@@ -16,9 +16,11 @@ import sys
 from pystray import Icon, Menu, MenuItem
 from PIL import Image
 from plyer import notification
+import subprocess
 
 # TODO: Instead of hard coding C:, find the Windows root dir + user dir dynamically.
 # TODO: Remove non-Windows specific code, such as for deriving computer name.
+# TODO: Reimplement RunCommand function.
 
 PROGRAM_TITLE = "VirtualSelf"
 PROGRAM_DESCRIPTION = "Anti-Theft / Remote Access Utility"
@@ -35,6 +37,10 @@ COMPUTER_NAME = os.uname().nodename if hasattr(os, 'uname') else os.getenv('COMP
 
 RUNNING = False
 MAIN_THREAD = None
+DEBUG = False
+
+def Debug(message):
+    if DEBUG: print(f"DEBUG: {message}")
 
 def Main():
     global RUNNING
@@ -61,8 +67,6 @@ def Main():
 
         if siteContent == 1:
             ProcessScreenshot(postDomain)
-        elif siteContent == 2:
-            ProcessCommand(cncDomain, postDomain)
         elif siteContent == 3:
             ProcessWebcam(postDomain)
         elif siteContent == 4:
@@ -124,6 +128,7 @@ def ProcessProcesses(postDomain):
 
     UploadFile(filename, postDomain)
     CleanUp(filename)
+    processList = None
 
 def ProcessAudio(duration, postDomain, sample_rate=44100):
     filename = f"C:\\Users\\{SYSTEM_USER}\\audio-{COMPUTER_NAME}-" + Get.ValidFilename(SYSTEM_USER, "wav")
@@ -164,6 +169,7 @@ def ProcessWebcam(postDomain):
 
     UploadFile(filename, postDomain)
     CleanUp(filename)
+    returnData, frame, cameraPointer = None, None, None
 
 def ProcessScreenshot(postDomain):
     try:
@@ -175,23 +181,6 @@ def ProcessScreenshot(postDomain):
         CleanUp(filename)
     except Exception as e:
         Log(f"Error in screenshot process: {e}")
-
-def ProcessCommand(cncDomain, postDomain):
-    filename = f"C:\\Users\\{SYSTEM_USER}\\command-{COMPUTER_NAME}-" + Get.ValidFilename(SYSTEM_USER, "txt")
-    try:
-        command = GetSiteContent(f"{cncDomain}/{DEFAULT_SIGNAL2}") or "dir"
-        shell = GetSiteContent(f"{cncDomain}/{DEFAULT_SIGNAL3}") or "cmd"
-
-        if shell not in ["cmd", "powershell", "wsl"]:
-            shell = "cmd"
-        
-        commandOutput = os.popen(command).read().strip()
-        Log(f"Executed \"{command}\".")
-        WriteStringToFile(commandOutput, filename)
-        UploadFile(filename, postDomain)
-        CleanUp(filename)
-    except Exception as e:
-        Log(f"Error in command execution process: {e}")
 
 def GetSiteContent(URL):
     try:
